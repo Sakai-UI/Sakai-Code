@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 
   def init_ui(self):
     self.setWindowTitle("Sakai Code")
-    self.resize(1000, 700)
+    self.resize(1000, 670)
 
     self.setStyleSheet(open("./src/css/style.qss", "r").read())
 
@@ -50,6 +50,16 @@ class MainWindow(QMainWindow):
     open_file.setShortcut("Ctrl+O")
     open_file.triggered.connect(self.open_file)
 
+    file_menu.addSeparator()
+
+    save_file = file_menu.addAction("Save")
+    save_file.setShortcut("Ctrl+S")
+    save_file.triggered.connect(self.save_file)
+
+    save_as = file_menu.addAction("Save As")
+    save_as.setShortcut("Ctrl+Shift+S")
+    save_as.triggered.connect(self.save_as)
+
     open_folder = file_menu.addAction("Open Folder")
     open_folder.setShortcut("Ctrl+K")
     open_folder.triggered.connect(self.open_folder)
@@ -61,17 +71,6 @@ class MainWindow(QMainWindow):
     copy_action.setShortcut("Ctrl+C")
     copy_action.triggered.connect(self.copy)
 
-  def new_file(self):
-    ...
-
-  def open_file(self):
-    ...
-
-  def open_folder(self):
-    ...
-
-  def copy(self):
-    ...
 
   def get_editor(self) -> QsciScintilla:
 
@@ -117,26 +116,32 @@ class MainWindow(QMainWindow):
       return b'\0' in f.read(1024)
 
   def set_new_tab(self, path: Path, is_new_file=False):
+    editor = self.get_editor()
+
+    if is_new_file:
+      self.tab_view.addTab(editor, "untitled")
+      self.setWindowTitle("untitled")
+      self.statusBar().showMessage("Opened untitled")
+      self.tab_view.setCurrentIndex(self.tab_view.count() - 1)
+      self.current_file = None
+      return
+
     if not path.is_file():
       return
-    if not is_new_file and self.is_binary(path):
+    if self.is_binary(path):
       self.statusBar().showMessage("Cannot Open Binary File", 2000)
       return
 
     # Check if file already open
-    if not is_new_file:
-      for i in range(self.tab_view.count()):
-        if self.tab_view.tabText(i) == path.name:
-          self.tab_view.setCurrentIndex(i)
-          self.current_file = path
-          return
+    for i in range(self.tab_view.count()):
+      if self.tab_view.tabText(i) == path.name:
+        self.tab_view.setCurrentIndex(i)
+        self.current_file = path
+        return
 
     # Create new tab
-    editor = self.get_editor()
-
     self.tab_view.addTab(editor, path.name)
-    if not is_new_file:
-      editor.setText(path.read_text())
+    editor.setText(path.read_text())
     self.setWindowTitle(path.name)
     self.current_file = path
     self.tab_view.setCurrentIndex(self.tab_view.count() - 1)
@@ -247,7 +252,7 @@ class MainWindow(QMainWindow):
     self.tab_view.setTabsClosable(True)
     self.tab_view.setMovable(True)
     self.tab_view.setDocumentMode(True)
-    # self.tab_view.tabsClos
+    self.tab_view.tabCloseRequested.connect(self.close_tab)
 
     # Add tree view and tab view
     self.hsplit.addWidget(self.tree_frame)
@@ -257,6 +262,9 @@ class MainWindow(QMainWindow):
     body_frame.setLayout(body)
 
     self.setCentralWidget(body_frame)
+
+  def close_tab(self, index):
+    self.tab_view.removeTab(index)
 
   def show_hide_tab(self):
     ...
@@ -268,6 +276,65 @@ class MainWindow(QMainWindow):
     path = self.model.filePath(index)
     p = Path(path)
     self.set_new_tab(p)
+
+  def new_file(self):
+    self.set_new_tab(None, is_new_file=True)
+
+  def save_file(self):
+    if self.current_file is None and self.tab_view.count() > 0:
+      self.save_as()
+
+    editor = self.tab_view.currentWidget()
+    self.current_file.write_text(editor.text())
+    self.statusBar().showMessage(f"Saved {self.current_file.name}", 2000)
+
+  def save_as(self):
+    # Save as
+    editor = self.tab_view.currentWidget()
+    if editor is None:
+      return
+
+    file_path = QFileDialog.getSaveFileName(self, "Save As", os.getcwd())[0]
+    if file_path == '':
+      self.statusBar().showMessage("Cancelled", 2000)
+      return
+    path = Path(file_path)
+    path.write_text(editor.text())
+    self.tab_view.setTabText(self.tab_view.currentIndex(), path.name)
+    self.statusBar().showMessage(f"Saved {path.name}", 2000)
+    self.current_file = path
+
+  def open_file(self):
+    # Open file
+    ops = QFileDialog.Options() # This is optional
+    ops |= QFileDialog.DontUseNativeDialog
+    # I will add support for opening multiple files later for now it can only open one at a time
+    new_file, _ = QFileDialog.getOpenFileName(self,
+                  "Pick A File", "", "All Files (*);;Python Files (*.py)",
+                  options=ops)
+
+
+    if new_file == '':
+      self.statusBar().showMessage("Cancelled", 2000)
+      return
+    f = Path(new_file)
+    self.set_new_tab(f)
+
+  def open_folder(self):
+    # Open folder
+    ops = QFileDialog.Options() # This is optional
+    ops |= QFileDialog.DontUseNativeDialog
+    new_folder, _ = QFileDialog.getExistingDirectory(self, "Pick A Folder", "", options=ops)
+    if new_folder:
+      self.model.setRootPath(new_folder)
+      self.tree_view.setModel(self.model.index(new_folder))
+      self.statusBar().showMessage(f"Opened {new_folder}", 2000)
+
+  def copy(self):
+    editor = self.tab_view.currentWidget()
+    if editor is not None:
+      editor.copy()
+
 
 if __name__ == '__main__':
   app = QApplication([])
