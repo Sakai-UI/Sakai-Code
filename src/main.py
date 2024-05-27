@@ -9,6 +9,10 @@ from PyQt5.Qsci import *
 import sys
 from pathlib import Path
 
+import keyword
+import pkgutil
+
+
 class MainWindow(QMainWindow):
   def __init__(self):
     super(QMainWindow, self).__init__()
@@ -32,7 +36,7 @@ class MainWindow(QMainWindow):
 
     self.set_up_menu()
     self.set_up_body()
-    self.statusBar().showMessage("heelo")
+    self.statusBar().showMessage("hello")
 
     self.show()
 
@@ -93,20 +97,56 @@ class MainWindow(QMainWindow):
     editor.setAutoIndent(True)
 
     # Autocomplete
-    # TODO: add autocomplete
+    editor.setAutoCompletionSource(QsciScintilla.AcsAll)
+    editor.setAutoCompletionThreshold(1)
+    editor.setAutoCompletionCaseSensitivity(False)
+    editor.setAutoCompletionUseSingle(QsciScintilla.AcusNever)
 
     # Caret
-    # TODO: ADD caret settings
+    editor.setCaretForegroundColor(QColor("#908CAA"))
+    editor.setCaretLineVisible(True)
+    editor.setCaretWidth(2)
+    editor.setCaretLineBackgroundColor(QColor("#817C9C"))
 
     # EOL
     editor.setEolMode(QsciScintilla.EolWindows)
     editor.setEolVisibility(False)
 
-    # Lexer
-    # TODO: add lexer
-    editor.setLexer(None)
+    # Lexer for syntax highlighting
+    self.pylexer = QsciLexerPython() # Theres a default lexer for many languages
+    self.pylexer.setDefaultFont(self.window_font)
+
+    # Api (you can add autocompletion using this)
+    self.api = QsciAPIs(self.pylexer)
+    for key in keyword.kwlist + dir(__builtins__): # Adding builtin function and keywords
+      self.api.add(key)
+
+    for _, name, _ in pkgutil.iter_modules(): # Adding all modules names from current interpreter
+      self.api.add(name)
+
+    self.api.prepare()
+
+    editor.setLexer(self.pylexer)
+
+    # Line numbers
+    editor.setMarginType(0, QsciScintilla.NumberMargin)
+    editor.setMarginWidth(0, "000")
+    editor.setMarginsForegroundColor(QColor("#E0DEF4"))
+    editor.setMarginsBackgroundColor(QColor("#232136"))
+    editor.setMarginsFont(self.window_font)
+
+    # Key press
+    editor.keyPressEvent = self.handle_editor_press
+
 
     return editor
+
+  def handle_editor_press(self, e: QKeyEvent):
+    editor: QsciScintilla = self.tab_view.currentWidget()
+    if e.modifiers() == Qt.ControlModifier and e.key() == Qt.Key_Space:
+      editor.autoCompleteFromAll()
+    else:
+      QsciScintilla.keyPressEvent(editor, e)
 
   def is_binary(self, path):
     '''
