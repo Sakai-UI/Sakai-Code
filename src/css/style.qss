@@ -1,0 +1,131 @@
+QMainWindow {
+  background-color: #151420;
+  color: #e0def4;
+}
+
+QTabWidget {
+  background-color: #232136;
+  color: #e0def4;
+}
+
+QTabBar::tab {
+  background-color: rgb(32, 30, 49);
+  color: #e0def4;
+  min-width: 10ex;
+  min-height: 10ex;
+  padding: 10px 20px;
+  border-style: none;
+}
+
+QTabBar::tab::selected {
+  color: #e0def4;
+  border-style: none;
+  background-color: #302C47;
+  border-bottom: 2px solid #817c9c;
+}
+
+QTabBar::close-button {
+  image: url("./src/icons/close-tabbar.svg");
+}
+
+QSplitter {
+  background-color: #232136;
+}
+
+QSplitter::handle {
+  background-color: #232136;
+}
+
+QScrollBar:vertical {
+  border: none;
+  width: 14px;
+  margin: 15px 0 15px 0;
+  background-color: #302C47;
+  border-radius: 0px;
+}
+
+QScrollBar:handle:vertical {
+  background-color: #302C47;
+}
+
+QScrollBar:handle:vertical {
+  background-color: #3b3657;
+}
+
+QScrollBar:handle:vertical:pressed {
+  background-color: #464064;
+}
+
+QScrollBar::sub-line::vertical {
+  border: none;
+  background: none;
+  height: 15px;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  subcontrol-position: top;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-line::vertical {
+  border: none;
+  background: none;
+  height: 15px;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  subcontrol-position: bottom;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+  background: none;
+}
+
+QScrollBar:horizontal {
+  border: none;
+  width: 14px;
+  margin: 15px 0 15px 0;
+  background-color: #302C47;
+  border-radius: 0px;
+}
+
+QScrollBar:handle:horizontal {
+  background-color: #302C47;
+}
+
+QScrollBar:handle:horizontal {
+  background-color: #3b3657;
+}
+
+QScrollBar:handle:horizontal:pressed {
+  background-color: #464064;
+}
+
+QScrollBar::sub-line::horizontal {
+  border: none;
+  background: none;
+  height: 15px;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  subcontrol-position: top;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-line::horizontal {
+  border: none;
+  background: none;
+  height: 15px;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  subcontrol-position: bottom;
+  subcontrol-origin: margin;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+  background: none;
+}
+
+QsciScintilla {
+  border: none;
+  background-color: #232136;
+  color: #e0def4;
+}

@@ -9,11 +9,16 @@ from PyQt5.Qsci import *
 import sys
 from pathlib import Path
 
+from editor import Editor
+
 class MainWindow(QMainWindow):
   def __init__(self):
     super(QMainWindow, self).__init__()
     # Add before init
     self.side_bar_clr = "#232136"
+
+    scriptDir = os.path.dirname(os.path.realpath(__file__))
+    self.setWindowIcon(QtGui.QIcon(scriptDir + os.path.sep + './logo/favicon.svg'))
 
     self.init_ui()
 
@@ -27,7 +32,7 @@ class MainWindow(QMainWindow):
 
     # Alterative Consolas font
     self.window_font = QFont("JetBrains Mono") # Font needs to be installed in your computer if its not use somenthing else
-    self.window_font.setPointSize(9)
+    self.window_font.setPointSize(10)
     self.setFont(self.window_font)
 
     self.set_up_menu()
@@ -60,10 +65,6 @@ class MainWindow(QMainWindow):
     save_as.setShortcut("Ctrl+Shift+S")
     save_as.triggered.connect(self.save_as)
 
-    open_folder = file_menu.addAction("Open Folder")
-    open_folder.setShortcut("Ctrl+K")
-    open_folder.triggered.connect(self.open_folder)
-
     # Edit menu
     edit_menu = menu_bar.addMenu("Edit")
 
@@ -73,39 +74,7 @@ class MainWindow(QMainWindow):
 
 
   def get_editor(self) -> QsciScintilla:
-
-    # Instance
-    editor = QsciScintilla()
-
-    # Enconding
-    editor.setUtf8(True)
-
-    # Font
-    editor.setFont(self.window_font)
-
-    # Brace matching
-    editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
-
-    # Indentation
-    editor.setIndentationGuides(True)
-    editor.setTabWidth(4)
-    editor.setIndentationsUseTabs(False)
-    editor.setAutoIndent(True)
-
-    # Autocomplete
-    # TODO: add autocomplete
-
-    # Caret
-    # TODO: ADD caret settings
-
-    # EOL
-    editor.setEolMode(QsciScintilla.EolWindows)
-    editor.setEolVisibility(False)
-
-    # Lexer
-    # TODO: add lexer
-    editor.setLexer(None)
-
+    editor = Editor()
     return editor
 
   def is_binary(self, path):
@@ -147,6 +116,14 @@ class MainWindow(QMainWindow):
     self.tab_view.setCurrentIndex(self.tab_view.count() - 1)
     self.statusBar().showMessage(f"Opened {path.name}", 2000)
 
+  def get_side_bar_label(self, path, name):
+    label = QLabel()
+    label.setPixmap(QPixmap(path).scaled(QSize(25, 25)))
+    label.setAlignment(Qt.AlignmentFlag.AlignTop)
+    label.setFont(self.window_font)
+    label.mousePressEvent = lambda e: self.show_hide_tab(e, name)
+    return label
+
   def set_up_body(self):
 
     # Body
@@ -168,6 +145,7 @@ class MainWindow(QMainWindow):
     self.side_bar.setFrameShadow(QFrame.Plain)
     self.side_bar.setStyleSheet(f'''
       background-color: {self.side_bar_clr};
+      border: none;
     ''')
     side_bar_layout = QHBoxLayout()
     side_bar_layout.setContentsMargins(5, 10, 5, 0)
@@ -175,11 +153,7 @@ class MainWindow(QMainWindow):
     side_bar_layout.setAlignment(Qt.AlignTop | Qt.AlignCenter)
 
     # Setup labels
-    folder_label = QLabel()
-    folder_label.setPixmap(QPixmap("./src/icons/files.svg").scaled(QSize(25, 25)))
-    folder_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-    folder_label.setFont(self.window_font)
-    folder_label.mousePressEvent = self.show_hide_tab
+    folder_label = self.get_side_bar_label("./src/icons/files.svg", "folder-icon")
     side_bar_layout.addWidget(folder_label)
     self.side_bar.setLayout(side_bar_layout)
 
@@ -200,7 +174,7 @@ class MainWindow(QMainWindow):
     tree_frame_layout.setSpacing(0)
     self.tree_frame.setStyleSheet('''
       QFrame {
-        background-color: #201e31;
+        background-color: #191826;
         border-radius: 5px;
         border: none;
         padding: 5px;
@@ -220,7 +194,7 @@ class MainWindow(QMainWindow):
 
     # Tree View
     self.tree_view = QTreeView()
-    self.tree_view.setFont(QFont("JetBrains Mono", 14))
+    self.tree_view.setFont(QFont("JetBrains Mono", 12))
     self.tree_view.setModel(self.model)
     self.tree_view.setRootIndex(self.model.index(os.getcwd()))
     self.tree_view.setSelectionMode(QTreeView.SingleSelection)
@@ -266,8 +240,11 @@ class MainWindow(QMainWindow):
   def close_tab(self, index):
     self.tab_view.removeTab(index)
 
-  def show_hide_tab(self):
-    ...
+  def show_hide_tab(self, e, type_):
+    if self.tree_frame.isHidden():
+      self.tree_frame.show()
+    else:
+      self.tree_frame.hide()
 
   def tree_view_context_menu(self, pos):
     ...
@@ -324,10 +301,11 @@ class MainWindow(QMainWindow):
     # Open folder
     ops = QFileDialog.Options() # This is optional
     ops |= QFileDialog.DontUseNativeDialog
-    new_folder, _ = QFileDialog.getExistingDirectory(self, "Pick A Folder", "", options=ops)
+
+    new_folder = QFileDialog.getExistingDirectory(self, "Pick A Folder", "", options=ops)
     if new_folder:
       self.model.setRootPath(new_folder)
-      self.tree_view.setModel(self.model.index(new_folder))
+      self.tree_view.setRootIndex(self.model.index(new_folder))
       self.statusBar().showMessage(f"Opened {new_folder}", 2000)
 
   def copy(self):
