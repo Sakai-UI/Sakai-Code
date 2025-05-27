@@ -1,5 +1,5 @@
 <p align="center">
-<img src="src/logo/icon.png" width="80" />
+<img src="https://github.com/Sakai-UI/Sakai-Code/blob/main/src/logo/favicon.svg" width="80" />
 <h2 align="center">Sakai Code</h2>
 </p>
 
@@ -13,7 +13,7 @@
 
 <h2>Install</h2>
 
-```sh pip install PyQt5 ```<br>
-```sh pip3 install QScintilla```
+```pip install PyQt5 ```<br>
+```pip3 install QScintilla```
 
 ##   More features will be added in the future
