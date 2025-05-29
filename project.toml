@@ -7,6 +7,7 @@ main_script="./src/main.py"
 [packages]
 PyQt5="5.15.7"
 QScintilla="2.13.3"
+jedi = "0.18.1"
 
 [scripts]
 upgrade-pip="python -m pip install --upgrade pip"

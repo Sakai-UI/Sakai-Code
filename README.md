@@ -14,6 +14,7 @@
 <h2>Install</h2>
 
 ```pip install PyQt5 ```<br>
-```pip3 install QScintilla```
+```pip3 install QScintilla```<br>
+```pip install jedi```
 
 ##   More features will be added in the future

@@ -75,8 +75,8 @@ class MainWindow(QMainWindow):
     copy_action.triggered.connect(self.copy)
 
 
-  def get_editor(self) -> QsciScintilla:
-    editor = Editor()
+  def get_editor(self, path: Path = None, is_python_file=True) -> QsciScintilla:
+    editor = Editor(path=path, is_python_file=is_python_file)
     return editor
 
   def is_binary(self, path):
@@ -87,7 +87,8 @@ class MainWindow(QMainWindow):
       return b'\0' in f.read(1024)
 
   def set_new_tab(self, path: Path, is_new_file=False):
-    editor = self.get_editor()
+    # Add whichever extensions you consider as python file
+    editor = self.get_editor(path, path.suffix in {".py", ".pyw"})
 
     if is_new_file:
       self.tab_view.addTab(editor, "untitled")

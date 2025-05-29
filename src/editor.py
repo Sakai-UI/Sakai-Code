@@ -7,15 +7,21 @@ from PyQt5.Qsci import *
 
 import keyword
 import pkgutil
+from pathlib import Path
 from lexer import PyCustomLexer
+from autcompleter import AutoCompleter
 
 # import resource
 
 class Editor(QsciScintilla):
 
-  def __init__(self, parent=None):
-
+  def __init__(self, parent=None, path: Path = None, is_python_file=True):
     super(Editor, self).__init__(parent)
+    self.path = path
+    self.full_path = self.path.absolute()
+    self.is_python_file = is_python_file
+
+    self.cursorPositionChanged.connect(self._cusorPositionChanged)
 
     # Enconding
     self.setUtf8(True)
@@ -50,26 +56,20 @@ class Editor(QsciScintilla):
     self.setEolMode(QsciScintilla.EolWindows)
     self.setEolVisibility(False)
 
-    # Lexer for syntax highlighting
-    self.pylexer = PyCustomLexer(self)
-    self.pylexer.setDefaultFont(self.window_font)
+    if self.is_python_file:
+      # Lexer for syntax highlighting
+      self.pylexer = PyCustomLexer(self)
+      self.pylexer.setDefaultFont(self.window_font)
 
-    # Api (you can add autocompletion using this)
-    self.api = QsciAPIs(self.pylexer)
-    for key in keyword.kwlist + dir(__builtins__): # Adding builtin functions and keywords
-      self.api.add(key)
+      self.__api = QsciAPIs(self.pylexer)
 
-    for _, name, _ in pkgutil.iter_modules(): # Adding all modules names from current interpreter
-      self.api.add(name)
+      self.auto_completer = AutoCompleter(self.full_path, self.__api)
+      self.auto_completer.finished.connect(self.loaded_autocomplete) # you can use this callback to do something
 
-    # For test purposes
-    # You can add custom function with its parametars and QsciScintilla will handle it for example
-    self.api.add("addition(a: int, b: int)")
-
-
-    self.api.prepare()
-
-    self.setLexer(self.pylexer)
+      self.setLexer(self.pylexer)
+    else:
+      self.setPaper(QColor("#232136"))
+      self.setColor(QColor("#e0def4"))
 
     # Line numbers
     self.setMarginType(0, QsciScintilla.NumberMargin)
@@ -81,8 +81,15 @@ class Editor(QsciScintilla):
     # Key press
     # self.keyPressEvent = self.handle_editor_press
 
-def keyPressEvent(self, e: QKeyEvent) -> None:
-  if e.modifiers() == Qt.ControlModifier and e.key() == Qt.Key_Space:
-    self.autoCompleteFromAll()
-  else:
-    return super().keyPressEvent(e)
+  def keyPressEvent(self, e: QKeyEvent) -> None:
+    if e.modifiers() == Qt.ControlModifier and e.key() == Qt.Key_Space:
+      self.autoCompleteFromAll()
+    else:
+      return super().keyPressEvent(e)
+
+  def _cusorPositionChanged(self, line: int, index: int) -> None:
+    if self.is_python_file:
+      self.auto_completer.get_completions(line+1, index, self.text())
+
+  def loaded_autocomplete(self):
+    pass
